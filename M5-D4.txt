@@ -8,3 +8,12 @@ refined backend application and will implment routes to manage files upload
 
 start with recap 
 
+fs-extra-module 
+
+import fs from "fs-extra" 
+
+fs-tools.js create file in lib folder
+
+data folder 
+
+
