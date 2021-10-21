@@ -16,4 +16,6 @@ fs-tools.js create file in lib folder
 
 data folder 
 
+npm i multer -package
+
 
