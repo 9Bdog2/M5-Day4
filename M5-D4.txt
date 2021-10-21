@@ -1,0 +1,10 @@
+NodeJs => File system 
+
+ExpressJS => uploading files
+
+Upload/download from the server 
+
+refined backend application and will implment routes to manage files upload
+
+start with recap 
+
