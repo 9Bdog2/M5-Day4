@@ -6,10 +6,11 @@ import uniqid from "uniqid";
 import createHttpError from "http-errors";
 import { validationResult } from "express-validator";
 import { postBlogValidation } from "./validation.js";
+import { getBlogPosts, writeBlogPosts } from "../../lib/fs-tools.js";
 
 const blogPostsRouter = express.Router();
 
-const blogPostsJSONPath = join(
+/* const blogPostsJSONPath = join(
   dirname(fileURLToPath(import.meta.url)),
   "./blogPosts.json"
 );
@@ -18,7 +19,7 @@ const getBlogPosts = () => JSON.parse(fs.readFileSync(blogPostsJSONPath));
 
 const writeBlogPosts = (blogPosts) => {
   fs.writeFileSync(blogPostsJSONPath, JSON.stringify(blogPosts));
-};
+}; */
 
 /* 
 GET /blogPosts => returns the list of blogposts
@@ -28,9 +29,9 @@ PUT /blogPosts /123 => edit the blogpost with the given id
 DELETE /blogPosts /123 => delete the blogpost with the given id
 */
 
-blogPostsRouter.get("/", (req, res, next) => {
+blogPostsRouter.get("/", async (req, res, next) => {
   try {
-    const blogPosts = getBlogPosts();
+    const blogPosts = await getBlogPosts();
     if (blogPosts) {
       res.status(200).json(blogPosts);
     } else {
@@ -59,7 +60,7 @@ blogPostsRouter.get("/", (req, res, next) => {
  "createdAt": "NEW DATE"
 }
 */
-blogPostsRouter.post("/", postBlogValidation, (req, res, next) => {
+blogPostsRouter.post("/", postBlogValidation, async (req, res, next) => {
   try {
     const errorList = validationResult(req);
     if (!errorList.isEmpty()) {
@@ -87,9 +88,9 @@ blogPostsRouter.post("/", postBlogValidation, (req, res, next) => {
         content: req.body.content,
         createdAt: new Date().toISOString(),
       };
-      const blogPosts = getBlogPosts();
+      const blogPosts = await getBlogPosts();
       blogPosts.push(newBlogPost);
-      writeBlogPosts(blogPosts);
+      await writeBlogPosts(blogPosts);
       res.status(201).send(newBlogPost);
     }
   } catch (error) {
@@ -97,9 +98,9 @@ blogPostsRouter.post("/", postBlogValidation, (req, res, next) => {
   }
 });
 
-blogPostsRouter.get("/:blogPostId", (req, res, next) => {
+blogPostsRouter.get("/:blogPostId", async (req, res, next) => {
   try {
-    const blogPosts = getBlogPosts();
+    const blogPosts = await getBlogPosts();
     const blogPost = blogPosts.find(
       (blogPost) => blogPost._id === req.params.blogPostId
     );
@@ -113,9 +114,9 @@ blogPostsRouter.get("/:blogPostId", (req, res, next) => {
   }
 });
 
-blogPostsRouter.put("/:blogPostId", (req, res, next) => {
+blogPostsRouter.put("/:blogPostId", async (req, res, next) => {
   try {
-    const blogPosts = getBlogPosts();
+    const blogPosts = await getBlogPosts();
     const index = blogPosts.findIndex(
       (blogPost) => blogPost._id === req.params.blogPostId
     );
@@ -130,7 +131,7 @@ blogPostsRouter.put("/:blogPostId", (req, res, next) => {
         updatedAt: new Date().toISOString(),
       };
       blogPosts[index] = updatedBlogPost;
-      writeBlogPosts(blogPosts);
+      await writeBlogPosts(blogPosts);
       res.status(200).send(updatedBlogPost);
     }
   } catch (error) {
@@ -138,14 +139,14 @@ blogPostsRouter.put("/:blogPostId", (req, res, next) => {
   }
 });
 
-blogPostsRouter.delete("/:blogPostId", (req, res, next) => {
+blogPostsRouter.delete("/:blogPostId", async (req, res, next) => {
   try {
-    const blogPosts = getBlogPosts();
+    const blogPosts = await getBlogPosts();
     const remainingBlogPosts = blogPosts.filter(
       (blogPost) => blogPost._id !== req.params.blogPostId
     );
     if (remainingBlogPosts) {
-      writeBlogPosts(remainingBlogPosts);
+      await writeBlogPosts(remainingBlogPosts);
       res
         .status(200)
         .send(`Blog Post with Id ${req.params.blogPostId} was deleted`);
