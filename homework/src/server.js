@@ -10,12 +10,16 @@ import {
   notFoundHandlers,
 } from "./errorHandlers.js";
 import { loggerMiddleware } from "./middlewares.js";
+import { join } from "path";
 
 const server = express();
 
 const port = 3001;
 
+const srcFolderPath = join(process.cwd(), "src");
+
 //------------------- MIDDLEWARES-------------------
+server.use(express.static(srcFolderPath));
 server.use(loggerMiddleware);
 server.use(cors());
 server.use(express.json());

@@ -1,16 +1,16 @@
 import express from "express";
 import fs from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
 import uniqid from "uniqid";
 import createHttpError from "http-errors";
 import { validationResult } from "express-validator";
 import { postBlogValidation } from "./validation.js";
 import { getBlogPosts, writeBlogPosts } from "../../lib/fs-tools.js";
+import multer from "multer";
+import { saveBlogPostCover } from "../../lib/fs-tools.js";
 
 const blogPostsRouter = express.Router();
 
-/* const blogPostsJSONPath = join(
+/* constbl ogPostsJSONPath = join(
   dirname(fileURLToPath(import.meta.url)),
   "./blogPosts.json"
 );
@@ -85,6 +85,7 @@ blogPostsRouter.post("/", postBlogValidation, async (req, res, next) => {
           avatar: req.body.author.avatar,
           _id: uniqid(),
         },
+        comments: [],
         content: req.body.content,
         createdAt: new Date().toISOString(),
       };
@@ -157,8 +158,93 @@ blogPostsRouter.delete("/:blogPostId", async (req, res, next) => {
     next(error);
   }
 });
-export default blogPostsRouter;
-
 /* Extra 
 GET /blogPosts?title=whatever => filter the blogposts and extract the only that match the condition (es.: title contains "whatever")
 */
+
+/* 
+POST /blogPosts/:id/uploadCover, uploads a picture 
+(save as idOfTheBlogPost.jpg in the public/img/blogPosts folder) for the blog post specified by the id.
+ Store the newly created URL into the corresponding post in blogPosts.json
+*/
+const uploadFile = multer({
+  fileFilter: (req, file, multerNext) => {
+    if (file.mimetype !== "image/png") {
+      multerNext(createHttpError(400, "Wrong file type"));
+    } else {
+      multerNext(null, true);
+    }
+  },
+}).single("cover");
+
+blogPostsRouter.post(
+  "/:authorId/uploadCover",
+  uploadFile,
+  async (req, res, next) => {
+    try {
+      console.log("The File : ", req.file);
+      await saveBlogPostCover(req.params.authorId, req.file.buffer);
+      // modify user record by adding/editing avatar field
+
+      // 1. get blogposts
+
+      // 2. find specific blogPosts by id
+
+      // 3. add/edit cover field
+
+      // 4. save blogPosts back into blogPostss.json
+
+      res.status(201).send("The Avatar has been posted");
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/* 
+GET /blogPosts/:id/comments, get all the comments for a specific post
+POST /blogPosts/:id/comments, add a new comment to the specific post
+*/
+
+blogPostsRouter.get("/:blogPostId/comments", async (req, res, next) => {
+  try {
+    const blogPosts = await getBlogPosts();
+    const blogPost = blogPosts.find(
+      (blogPost) => blogPost.id === req.params.blogPostId
+    );
+    if (blogPost) {
+      res.status(200).send(blogPost.comments);
+    } else {
+      next(createHttpError(404, "No Comments found"));
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+blogPostsRouter.post("/:blogPostId/comments", async (req, res, next) => {
+  try {
+    const blogPosts = await getBlogPosts();
+    const blogPost = blogPosts.find(
+      (blogPost) => blogPost.id === req.params.blogPostId
+    );
+    if (blogPost) {
+      const newComment = {
+        ...req.body,
+        id: uniqid(),
+        authorName: req.body.authorName,
+        content: req.body.content,
+        createdAt: new Date().toISOString(),
+      };
+      blogPost.comments.push(newComment);
+      await writeBlogPosts(blogPosts);
+      res.status(201).send(newComment);
+    } else {
+      next(createHttpError(404, "No blogpost found"));
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+export default blogPostsRouter;

@@ -25,3 +25,5 @@ export const writeAuthors = (content) => writeJSON(authorsJSONPath, content);
 
 export const saveAuthorsAvatar = (filename, contentAsBuffer) =>
   writeFile(join(authorsPublicFolderPath, filename), contentAsBuffer);
+export const saveBlogPostCover = (filename, contentAsBuffer) =>
+  writeFile(join(blogPostsPublicFolderPath, filename), contentAsBuffer);
