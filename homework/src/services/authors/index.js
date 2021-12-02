@@ -173,9 +173,10 @@ authorsRouter.post(
         (author) => author.id === req.params.authorId
       );
       // 3. add/edit cover field
-      authors.avatar = req.file.buffer;
+      author.avatar = req.file;
+      console.log("The Author : ", authors);
       // 4. save author back into authors.json
-      await writeAuthors(author);
+      /* await writeAuthors(author); */
       res.status(201).send("The Avatar has been posted");
     } catch (error) {
       next(error);
