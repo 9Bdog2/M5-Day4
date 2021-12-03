@@ -1,8 +1,6 @@
 import express from "express";
 import fs from "fs";
 import uniqid from "uniqid";
-import path, { extname, dirname } from "path";
-import { fileURLToPath } from "url";
 import {
   getAuthors,
   writeAuthors,
@@ -12,7 +10,27 @@ import createHttpError from "http-errors";
 import multer from "multer";
 
 const authorsRouter = express.Router();
+//------------------- File Path as no DB connection-------------------
 
+/* const currentFilePath = fileURLToPath(import.meta.url);
+const currentFolderPath = dirname(currentFilePath);
+const authorsJSONPath = join(currentFolderPath, "authors.json");
+
+const blogPostsJSONPath = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "../blogPosts/blogPosts.json"
+); */
+
+/* const getBlogPosts = () => JSON.parse(fs.readFileSync(blogPostsJSONPath)); */
+//--------------------------------------
+/* 
+name
+surname
+ID (Unique and server-generated)
+email
+date of birth
+avatar (e.g. https://ui-avatars.com/api/?name=John+Doe) 
+*/
 //------------------- ENDPOINTS-------------------
 
 authorsRouter.get("/", async (req, res, next) => {
@@ -146,15 +164,18 @@ authorsRouter.post(
       await saveAuthorsAvatar(req.params.authorId, req.file.buffer);
       // modify user record by adding/editing avatar field
 
-      const { originalname, buffer } = req.file;
-      const extension = extname(originalname);
-      const fileName = `${req.params.id}${extension}`;
-      const pathToFile = path.join(srcFolderPath, fileName);
-      fs.writeFileSync(pathToFile, buffer);
-      const link = `http://localhost:3001/${fileName}`;
-      req.file = link;
-
-      res.status(201).send("The Avatar has been posted" + req.file);
+      // 1. get author
+      const authors = await getAuthors();
+      // 2. find specific author by id
+      const author = authors.find(
+        (author) => author.id === req.params.authorId
+      );
+      // 3. add/edit cover field
+      author.avatar = req.params.uploadAvatar;
+      console.log(author);
+      // 4. save author back into authors.json
+      /* await writeAuthors(author); */
+      res.status(201).send("The Avatar has been posted");
     } catch (error) {
       next(error);
     }
